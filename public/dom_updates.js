@@ -115,7 +115,7 @@ export function helperForAnimatingGift(agArray) {
     animateGift(agArray[0]);
     agArray.shift();
 
-    if (!isAnimatingGiftUI() && !isPossiblyAnimatingGift() && agArray.length != 0)
-        helperForAnimatingGift(agArray)
+     //if (!isAnimatingGiftUI() && !isPossiblyAnimatingGift() && agArray.length != 0)
+    // helperForAnimatingGift(agArray)
 
 }
