@@ -1,34 +1,65 @@
 // @ts-check
 
 import { APIWrapper, API_EVENT_TYPE } from "./api.js";
-import { addMessage, animateGift, isPossiblyAnimatingGift, isAnimatingGiftUI, helperForAnimatingGift } from "./dom_updates.js";
+import { addMessage, animateGift, isPossiblyAnimatingGift, isAnimatingGiftUI } from "./dom_updates.js";
 
-const api = new APIWrapper();
-var allAgArray = [];
+const api = new APIWrapper(null, true, true);
 
 api.setEventHandler((events) => {
 
-    var agArray = events.filter(x => x.type === API_EVENT_TYPE.ANIMATED_GIFT);
-    var theOthers = events.filter(x => x.type !== API_EVENT_TYPE.ANIMATED_GIFT);
+        var agArray = events.filter(x => x.type == API_EVENT_TYPE.ANIMATED_GIFT);
+        var theOthers = events.filter(x => x.type != API_EVENT_TYPE.ANIMATED_GIFT);
 
-    allAgArray = allAgArray.concat(agArray);
+        //sort array m to g
+        theOthers.sort(function(event1, event2) {
+            return event1.type == event2.type ? 0 :
+                event2.type == API_EVENT_TYPE.MESSAGE ? 1 :
+                event1.type == API_EVENT_TYPE.MESSAGE ? -1 : 0;
+        });
 
-    //we have to sort that as m, g
-    theOthers.sort(function(event1, event2) {
-        return event1.type > event2.type ? -1 : 1;
-    });
+        function timeOutHelper(event, lastAnimationEnd) {
 
-    //if we have any ag items, we have to sent that to our helper method
-    helperForAnimatingGift(allAgArray);
+            if (lastAnimationEnd + 2000 > Date.now()) {
+                setTimeout(() => {
+                    animateGift(event);
+                    addMessage(event);
+                }, (lastAnimationEnd + 2000 - Date.now()));
+            } else {
+                animateGift(event);
+                addMessage(event);
+            }
 
-    theOthers.forEach(event => {
-        //we show  theothers as message
-        addMessage(event);
-        //We have to check again 
-        helperForAnimatingGift(allAgArray);
+            return Date.now() + 2000;
+        }
 
-    });
+        function helper(array) {
 
-})
+            let lastAnimationEnd = 0;
+            for (let index = 0; index < array.length; index++) {
 
-// NOTE: UI helper methods from `dom_updates` are already imported above.
+                const event = array[index];
+                let condition = event.type == API_EVENT_TYPE.MESSAGE && (event.timestamp.valueOf() + 20000 < Date.now()) || event.type == API_EVENT_TYPE.GIFT;
+
+                if (condition) {
+                    addMessage(event);
+                } else if (event.type == API_EVENT_TYPE.ANIMATED_GIFT) {
+
+                    if (!isPossiblyAnimatingGift()) {
+                        lastAnimationEnd = timeOutHelper(event, lastAnimationEnd);
+                    } else if (theOthers[0] && condition) {
+                        addMessage(theOthers[0]);
+                        theOthers.splice(0, 1);
+                        index--;
+                    } else {
+                        lastAnimationEnd = timeOutHelper(event, lastAnimationEnd);
+                    }
+
+                }
+            }
+        }
+
+        helper(agArray);
+        helper(theOthers);
+
+    })
+    // NOTE: UI helper methods from `dom_updates` are already imported above.
