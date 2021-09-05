@@ -99,23 +99,7 @@ export function animateGift(event) {
             lastAnimationEnd = Date.now() + ANIMATION_DURATION;
 
             animatedGiftDiv.classList.add("animated");
+
         })
     })
-}
-
-
-/**
- * @param {any[]} agArray
- * AnimatingGift items
- */
-export function helperForAnimatingGift(agArray) {
-
-    if (agArray.length == 0 || isPossiblyAnimatingGift()) return;
-    addMessage(agArray[0]);
-    animateGift(agArray[0]);
-    agArray.shift();
-
-     //if (!isAnimatingGiftUI() && !isPossiblyAnimatingGift() && agArray.length != 0)
-    // helperForAnimatingGift(agArray)
-
 }
